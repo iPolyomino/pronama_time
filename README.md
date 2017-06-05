@@ -1,19 +1,19 @@
-#プロ生ちゃんの時間！
+# プロ生ちゃんの時間！
 
-##Overview
+## Overview
 プロ生ちゃんによる時報です。
 Google Chromeの拡張機能として使うことができます。
 
 This is a time report by Pronama-chan.
 You can use it as an extension of Google Chrome.
 
-##Description
+## Description
 ちょうどの時間にプロ生ちゃんが時間を読み上げます。クリックすることで、ON/OFFの切り替えをすることができます。
 
 In just time Pronama-chan reads the time. You can switch ON / OFF by clicking.
 
 
-##License
+## License
 
 このプログラムは[プログラミング生放送-利用ガイドライン](http://pronama.azurewebsites.net/pronama/guideline/)及び[プログラミング生放送-音声の利用ガイドライン](http://pronama.azurewebsites.net/pronama/guideline-voice/)に準じます。
 
