@@ -22,6 +22,9 @@
     ],
 
     "background": {
-        "scripts": ["main.js"]
+        "scripts": [
+            "js/moment.js",
+            "main.js"
+        ]
     }
 }
