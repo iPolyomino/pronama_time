@@ -15,8 +15,10 @@ chrome.browserAction.onClicked.addListener(() => {
 });
 
 function alarms_create() {
+    const next_alarm = moment().add(1, 'hour');
+    next_alarm.set({minute: 0, second: 0, millisecond: 0});
     chrome.alarms.create('ALARM', {
-        when: Date.now() + 1000 * 60 - (Date.now() % (1000 * 60 * 60))
+        when: next_alarm.unix() * 1000
     });
 }
 
@@ -27,9 +29,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 function run() {
-    const dt = new Date();
-    const hour = dt.getHours();
-    const minute = dt.getMinutes();
+    const hour = moment().hour();
+    const minute = moment().minute();
 
     notify(hour, minute);
     audio_play(hour, minute);
