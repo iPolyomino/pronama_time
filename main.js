@@ -1,40 +1,42 @@
-var alarm_flag = true;
+'use strict';
 
-chrome.browserAction.onClicked.addListener(function () {
-    if(alarm_flag){
+let alarm_flag = true;
+
+chrome.browserAction.onClicked.addListener(() => {
+    if (alarm_flag) {
         alarm_flag = false;
-        chrome.browserAction.setIcon({path:"icon/icon128_white.png"});
+        chrome.browserAction.setIcon({path: "icon/icon128_white.png"});
         chrome.alarms.clearAll();
-    }else{
+    } else {
         alarm_flag = true;
-        chrome.browserAction.setIcon({path:"icon/icon128.png"});
+        chrome.browserAction.setIcon({path: "icon/icon128.png"});
         run();
     }
 });
 
-function alarms_create(){
+function alarms_create() {
     chrome.alarms.create('ALARM', {
-        when:Date.now()+1000*60*60-(Date.now()%(1000*60*60))
+        when: Date.now() + 1000 * 60 - (Date.now() % (1000 * 60 * 60))
     });
 }
 
-chrome.alarms.onAlarm.addListener(function (alarm) {
+chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name == 'ALARM' && alarm_flag) {
         run();
     }
 });
 
 function run() {
-    var dt = new Date();
-    var hour = dt.getHours();
-    var minute = dt.getMinutes();
+    const dt = new Date();
+    const hour = dt.getHours();
+    const minute = dt.getMinutes();
 
     notify(hour, minute);
     audio_play(hour, minute);
 }
 
 function notify(hour, minute) {
-    var msg = [
+    const msg = [
         "0時だ～日付変わっちゃった",
         "1時～そろそろ寝る～？",
         "2時！ えっ？ まだ寝ないよ",
@@ -61,42 +63,43 @@ function notify(hour, minute) {
         "23時！ ひゃっほう！"
     ];
 
-    var opt = {
+    const opt = {
         iconUrl: "icon/icon128.png",
         type: 'list',
         title: hour + "時" + minute + "分",
         message: '',
         priority: 1,
-        items: [{
-            title: msg[hour],
-            message: ''
-            }]
+        items: [
+            {
+                title: msg[hour],
+                message: ''
+            }
+        ]
     };
-    chrome.notifications.create('k_notification', opt, function () {});
+    chrome.notifications.create('k_notification', opt);
 }
 
-
 function audio_play(hour, minute) {
-    var hour_src = "voice/kei2_voice_" + ("00" + (hour + 56)).slice(-3) + ".wav";
-    var minute_src = "voice/kei2_voice_" + ("00" + (minute + 106)).slice(-3) + ".wav";
+    const hour_src = `voice/kei2_voice_${("00"+(hour + 56)).slice(-3)}.wav`;
+    const minute_src = `voice/kei2_voice_${("00"+(minute + 106)).slice(-3)}.wav`;
 
-    var hour_audio = new Audio(hour_src);
-    var minute_audio = new Audio(minute_src);
+    const hour_audio = new Audio(hour_src);
+    const minute_audio = new Audio(minute_src);
 
     if (minute == 0) {
-        var just_time = "voice/kei2_voice_" + ("00" + (hour + 81)).slice(-3) + ".wav";
-        var just_audio = new Audio(just_time);
+        const just_time = "voice/kei2_voice_" + ("00" + (hour + 81)).slice(-3) + ".wav";
+        const just_audio = new Audio(just_time);
         just_audio.play();
-        just_audio.addEventListener("ended", function () {
-            chrome.notifications.clear('k_notification', function () {});
+        just_audio.addEventListener("ended", () => {
+            chrome.notifications.clear('k_notification');
         }, false);
     } else {
         hour_audio.play();
-        hour_audio.addEventListener("ended", function () {
+        hour_audio.addEventListener("ended", () => {
             minute_audio.play();
         }, false);
-        minute_audio.addEventListener("ended", function () {
-            chrome.notifications.clear('k_notification', function () {});
+        minute_audio.addEventListener("ended", () => {
+            chrome.notifications.clear('k_notification');
         }, false);
     }
     alarms_create();
