@@ -2,7 +2,7 @@
     "manifest_version": 2,
     "name": "プロ生ちゃんの時間！",
     "short_name": "プロ生時間",
-    "version": "1.2.0",
+    "version": "2.0.0",
 
     "description": "プロ生ちゃんが時間を教えてくれるよ！",
     "icons": {
@@ -18,7 +18,8 @@
 
     "permissions": [
         "notifications",
-        "alarms"
+        "alarms",
+        "storage"
     ],
 
     "background": {

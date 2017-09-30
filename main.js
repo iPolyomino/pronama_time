@@ -2,17 +2,34 @@
 
 let alarm_flag = true;
 
+chrome.storage.sync.get((strage_data) => {
+    if (strage_data.alarm_enable != null) {
+        alarm_flag = strage_data.alarm_enable;
+    }
+    set_property(alarm_flag);
+});
+
 chrome.browserAction.onClicked.addListener(() => {
     if (alarm_flag) {
         alarm_flag = false;
-        chrome.browserAction.setIcon({path: 'icon/icon128_white.png'});
-        chrome.alarms.clearAll();
+        set_property(alarm_flag);
     } else {
         alarm_flag = true;
-        chrome.browserAction.setIcon({path: 'icon/icon128.png'});
-        run();
+        set_property(alarm_flag);
     }
 });
+
+function set_property(alarm_state) {
+    if (alarm_state) {
+        chrome.browserAction.setIcon({path: 'icon/icon128.png'});
+        chrome.storage.sync.set({'alarm_enable': alarm_state});
+        alarms_create();
+    } else {
+        chrome.browserAction.setIcon({path: 'icon/icon128_white.png'});
+        chrome.storage.sync.set({'alarm_enable': alarm_state});
+        chrome.alarms.clearAll();
+    }
+}
 
 function alarms_create() {
     const next_alarm = moment().add(1, 'hour');
@@ -105,5 +122,3 @@ function audio_play(hour, minute) {
     }
     alarms_create();
 }
-
-alarms_create();
