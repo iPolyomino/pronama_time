@@ -50,7 +50,7 @@ function run() {
     const minute = moment().minute();
 
     notify(hour, minute);
-    audio_play(hour, minute);
+    audio_play(hour);
 }
 
 function notify(hour, minute) {
@@ -97,7 +97,7 @@ function notify(hour, minute) {
     chrome.notifications.create('k_notification', options);
 }
 
-function audio_play(hour, minute) {
+function audio_play(hour) {
     const time = `voice/kei2_voice_${ ('00' + (hour + 81)).slice(-3)}.wav`;
     const audio = new Audio(time);
     audio.play();
