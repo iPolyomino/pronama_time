@@ -2,7 +2,7 @@
 
 let alarm_flag = true;
 
-chrome.storage.sync.get((strage_data) => {
+chrome.storage.sync.get(strage_data => {
     if (strage_data.alarm_enable != null) {
         alarm_flag = strage_data.alarm_enable;
     }
@@ -39,7 +39,7 @@ function alarms_create() {
     });
 }
 
-chrome.alarms.onAlarm.addListener((alarm) => {
+chrome.alarms.onAlarm.addListener(alarm => {
     if (alarm.name == 'ALARM' && alarm_flag) {
         run();
     }
@@ -50,11 +50,11 @@ function run() {
     const minute = moment().minute();
 
     notify(hour, minute);
-    audio_play(hour, minute);
+    audio_play(hour);
 }
 
 function notify(hour, minute) {
-    const msg = [
+    const message = [
         '0時だ～日付変わっちゃった',
         '1時～そろそろ寝る～？',
         '2時！ えっ？ まだ寝ないよ',
@@ -81,7 +81,7 @@ function notify(hour, minute) {
         '23時！ ひゃっほう！'
     ];
 
-    const opt = {
+    const options = {
         iconUrl: 'icon/icon128.png',
         type: 'list',
         title: hour + '時' + minute + '分',
@@ -89,36 +89,21 @@ function notify(hour, minute) {
         priority: 1,
         items: [
             {
-                title: msg[hour],
+                title: message[hour],
                 message: ''
             }
         ]
     };
-    chrome.notifications.create('k_notification', opt);
+    chrome.notifications.create('k_notification', options);
 }
 
-function audio_play(hour, minute) {
-    const hour_src = `voice/kei2_voice_${ ('00' + (hour + 56)).slice(-3)}.wav`;
-    const minute_src = `voice/kei2_voice_${ ('00' + (minute + 106)).slice(-3)}.wav`;
+function audio_play(hour) {
+    const time = `voice/kei2_voice_${ ('00' + (hour + 81)).slice(-3)}.wav`;
+    const audio = new Audio(time);
+    audio.play();
+    audio.addEventListener('ended', () => {
+        chrome.notifications.clear('k_notification');
+    }, false);
 
-    const hour_audio = new Audio(hour_src);
-    const minute_audio = new Audio(minute_src);
-
-    if (minute == 0) {
-        const just_time = `voice/kei2_voice_${ ('00' + (hour + 81)).slice(-3)}.wav`;
-        const just_audio = new Audio(just_time);
-        just_audio.play();
-        just_audio.addEventListener('ended', () => {
-            chrome.notifications.clear('k_notification');
-        }, false);
-    } else {
-        hour_audio.play();
-        hour_audio.addEventListener('ended', () => {
-            minute_audio.play();
-        }, false);
-        minute_audio.addEventListener('ended', () => {
-            chrome.notifications.clear('k_notification');
-        }, false);
-    }
     alarms_create();
 }
