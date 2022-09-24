@@ -32,10 +32,11 @@ function set_property(alarm_state) {
 }
 
 function alarms_create() {
-  const next_alarm = moment().add(1, "hour");
-  next_alarm.set({ minute: 0, second: 0, millisecond: 0 });
+  const next_alarm = new Date();
+  next_alarm.setMinutes(0, 0, 0);
+  next_alarm.setHours(next_alarm.getHours() + 1);
   chrome.alarms.create("ALARM", {
-    when: next_alarm.unix() * 1000,
+    when: next_alarm.getTime(),
   });
 }
 
@@ -46,8 +47,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 function run() {
-  const hour = moment().hour();
-  const minute = moment().minute();
+  const now = new Date();
+  const hour = now.getHours();
+  const minute = now.getMinutes();
 
   notify(hour, minute);
   audio_play(hour);

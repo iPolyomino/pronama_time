@@ -19,6 +19,6 @@
   "permissions": ["notifications", "alarms", "storage"],
 
   "background": {
-    "scripts": ["js/moment.js", "main.js"]
+    "scripts": ["main.js"]
   }
 }
