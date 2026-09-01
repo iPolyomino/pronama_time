@@ -1,8 +1,9 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "プロ生ちゃんの時間！",
   "short_name": "プロ生時間",
-  "version": "2.1.1",
+  "version": "3.0.0",
+  "minimum_chrome_version": "116",
 
   "description": "プロ生ちゃんが時間を教えてくれるよ！",
   "icons": {
@@ -11,14 +12,19 @@
     "128": "icon/icon128.png"
   },
 
-  "browser_action": {
+  "action": {
     "default_icon": "icon/icon128.png",
     "default_title": "Pronama Time"
   },
 
-  "permissions": ["notifications", "alarms", "storage"],
+  "permissions": [
+    "notifications",
+    "alarms",
+    "storage",
+    "offscreen"
+  ],
 
   "background": {
-    "scripts": ["main.js"]
+    "service_worker": "main.js"
   }
 }

@@ -1,61 +1,76 @@
 "use strict";
 
-let alarm_flag = true;
+const ALARM_NAME = "hourly_time_signal";
+const LEGACY_ALARM_NAME = "ALARM";
+const NOTIFICATION_ID = "k_notification";
 
-chrome.storage.sync.get((strage_data) => {
-  if (strage_data.alarm_enable != null) {
-    alarm_flag = strage_data.alarm_enable;
-  }
-  set_property(alarm_flag);
+initialize();
+
+chrome.runtime.onInstalled.addListener(initialize);
+chrome.runtime.onStartup.addListener(initialize);
+
+chrome.action.onClicked.addListener(async () => {
+  const { alarm_enable = true } = await chrome.storage.sync.get("alarm_enable");
+  await set_property(!alarm_enable);
 });
 
-chrome.browserAction.onClicked.addListener(() => {
-  if (alarm_flag) {
-    alarm_flag = false;
-    set_property(alarm_flag);
-  } else {
-    alarm_flag = true;
-    set_property(alarm_flag);
-  }
-});
+async function initialize() {
+  const { alarm_enable = true } = await chrome.storage.sync.get("alarm_enable");
+  await chrome.alarms.clear(LEGACY_ALARM_NAME);
+  await set_property(alarm_enable);
+}
 
-function set_property(alarm_state) {
+async function set_property(alarm_state) {
+  await chrome.storage.sync.set({
+    alarm_enable: alarm_state,
+  });
+
   if (alarm_state) {
-    chrome.browserAction.setIcon({ path: "icon/icon128.png" });
-    chrome.storage.sync.set({ alarm_enable: alarm_state });
-    alarms_create();
+    await chrome.action.setIcon({
+      path: "icon/icon128.png",
+    });
+    await alarms_create();
   } else {
-    chrome.browserAction.setIcon({ path: "icon/icon128_white.png" });
-    chrome.storage.sync.set({ alarm_enable: alarm_state });
-    chrome.alarms.clearAll();
+    await chrome.action.setIcon({
+      path: "icon/icon128_white.png",
+    });
+    await chrome.alarms.clear(ALARM_NAME);
   }
 }
 
-function alarms_create() {
+async function alarms_create() {
   const next_alarm = new Date();
+
   next_alarm.setMinutes(0, 0, 0);
   next_alarm.setHours(next_alarm.getHours() + 1);
-  chrome.alarms.create("ALARM", {
+
+  await chrome.alarms.create(ALARM_NAME, {
     when: next_alarm.getTime(),
+    periodInMinutes: 60,
   });
 }
 
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name == "ALARM" && alarm_flag) {
-    run();
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name !== ALARM_NAME) {
+    return;
+  }
+
+  const { alarm_enable = true } = await chrome.storage.sync.get("alarm_enable");
+  if (alarm_enable) {
+    await run();
   }
 });
 
-function run() {
+async function run() {
   const now = new Date();
   const hour = now.getHours();
   const minute = now.getMinutes();
 
-  notify(hour, minute);
-  audio_play(hour);
+  await notify(hour, minute);
+  await audio_play(hour);
 }
 
-function notify(hour, minute) {
+async function notify(hour, minute) {
   const message = [
     "0時だ～日付変わっちゃった",
     "1時～そろそろ寝る～？",
@@ -96,20 +111,43 @@ function notify(hour, minute) {
       },
     ],
   };
-  chrome.notifications.create("k_notification", options);
+
+  await chrome.notifications.create(NOTIFICATION_ID, options);
 }
 
-function audio_play(hour) {
+async function audio_play(hour) {
   const time = `voice/kei2_voice_${("00" + (hour + 81)).slice(-3)}.wav`;
-  const audio = new Audio(time);
-  audio.play();
-  audio.addEventListener(
-    "ended",
-    () => {
-      chrome.notifications.clear("k_notification");
-    },
-    false
-  );
 
-  alarms_create();
+  await createOffscreenDocument();
+
+  await chrome.runtime.sendMessage({
+    type: "play_audio",
+    path: time,
+  });
 }
+
+async function createOffscreenDocument() {
+  const contexts = await chrome.runtime.getContexts({
+    contextTypes: ["OFFSCREEN_DOCUMENT"],
+    documentUrls: [chrome.runtime.getURL("offscreen.html")],
+  });
+
+  if (contexts.length > 0) {
+    return;
+  }
+
+  await chrome.offscreen.createDocument({
+    url: "offscreen.html",
+    reasons: ["AUDIO_PLAYBACK"],
+    justification: "プロ生ちゃんの時報音声を再生するため",
+  });
+}
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type !== "audio_ended") {
+    return;
+  }
+
+  chrome.notifications.clear(NOTIFICATION_ID);
+  chrome.offscreen.closeDocument();
+});
