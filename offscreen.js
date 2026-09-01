@@ -8,20 +8,21 @@ chrome.runtime.onMessage.addListener((message) => {
   }
 
   audio = new Audio(message.path);
+  audio.addEventListener("ended", () => {
+    notifyAudioEnded().catch(reportError);
+  }, { once: true });
 
-  audio.play().then(() => {
-    audio.addEventListener("ended", () => {
-      notifyAudioEnded();
-    });
-  }).catch((error) => {
+  audio.play().catch((error) => {
     console.error("Failed to play audio:", error);
-    notifyAudioEnded();
+    notifyAudioEnded().catch(reportError);
   });
 });
 
-function notifyAudioEnded() {
-  chrome.runtime.sendMessage({
-    type: "audio_ended",
-  });
+async function notifyAudioEnded() {
+  await chrome.runtime.sendMessage({ type: "audio_ended" });
   audio = undefined;
+}
+
+function reportError(error) {
+  console.error(error);
 }
