@@ -13,12 +13,12 @@ chrome.action.onClicked.addListener(() => toggleAlarm().catch(reportError));
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) {
-    handleAlarm().catch(reportError);
+    handleAlarm(alarm).catch(reportError);
   }
 });
 
 chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === "audio_ended") {
+  if (message.target === "service_worker" && message.type === "audio_ended") {
     cleanUpAudio().catch(reportError);
   }
 });
@@ -74,7 +74,7 @@ async function createAlarm() {
   });
 }
 
-async function handleAlarm() {
+async function handleAlarm(alarm) {
   const { alarm_enable = true } = await chrome.storage.sync.get("alarm_enable");
   if (!alarm_enable) {
     return;
@@ -86,7 +86,7 @@ async function handleAlarm() {
   const now = new Date();
 
   // Do not announce an old alarm delivered late after the device resumes.
-  if (now.getMinutes() === 0) {
+  if (now.getTime() - alarm.scheduledTime < 60 * 1000) {
     await run(now);
   }
 }
@@ -140,7 +140,28 @@ async function playAudio(hour) {
   const path = `voice/kei2_voice_${("00" + (hour + 81)).slice(-3)}.wav`;
 
   await createOffscreenDocument();
-  await chrome.runtime.sendMessage({ type: "play_audio", path });
+  await sendAudioMessage(path);
+}
+
+async function sendAudioMessage(path) {
+  const message = { type: "play_audio", target: "offscreen", path };
+
+  try {
+    await chrome.runtime.sendMessage(message);
+  } catch (error) {
+    if (!String(error).includes("No SW")) {
+      throw error;
+    }
+
+    // A stale offscreen context can remain briefly after an extension reload.
+    const contexts = await getOffscreenContexts();
+    if (contexts.length > 0) {
+      await chrome.offscreen.closeDocument();
+    }
+
+    await createOffscreenDocument();
+    await chrome.runtime.sendMessage(message);
+  }
 }
 
 async function createOffscreenDocument() {

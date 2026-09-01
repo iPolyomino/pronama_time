@@ -3,7 +3,7 @@
 let audio;
 
 chrome.runtime.onMessage.addListener((message) => {
-  if (message.type !== "play_audio") {
+  if (message.target !== "offscreen" || message.type !== "play_audio") {
     return;
   }
 
@@ -19,7 +19,10 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 async function notifyAudioEnded() {
-  await chrome.runtime.sendMessage({ type: "audio_ended" });
+  await chrome.runtime.sendMessage({
+    type: "audio_ended",
+    target: "service_worker",
+  });
   audio = undefined;
 }
 
